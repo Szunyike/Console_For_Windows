@@ -80,6 +80,7 @@
       <DependentUpon>Form1.vb</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Hierarchy.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -95,13 +96,52 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="NewParameter.Designer.vb">
+      <DependentUpon>NewParameter.vb</DependentUpon>
+    </Compile>
+    <Compile Include="NewParameter.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NewProgram.Designer.vb">
+      <DependentUpon>NewProgram.vb</DependentUpon>
+    </Compile>
+    <Compile Include="NewProgram.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Programs.Designer.vb">
+      <DependentUpon>Programs.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Programs.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="TextBoxwLabel.Designer.vb">
+      <DependentUpon>TextBoxwLabel.vb</DependentUpon>
+    </Compile>
+    <Compile Include="TextBoxwLabel.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Form1.resx">
+      <DependentUpon>Form1.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.vb</LastGenOutput>
       <CustomToolNamespace>My.Resources</CustomToolNamespace>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NewParameter.resx">
+      <DependentUpon>NewParameter.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NewProgram.resx">
+      <DependentUpon>NewProgram.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Programs.resx">
+      <DependentUpon>Programs.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TextBoxwLabel.resx">
+      <DependentUpon>TextBoxwLabel.vb</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
@@ -115,6 +155,16 @@
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Szunyi.Common\Szunyi.Common\Szunyi.Common.vbproj">
+      <Project>{d2d39939-3eac-4599-bf5b-41228d7e3bbf}</Project>
+      <Name>Szunyi.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Szunyi.IO\Szunyi.IO\Szunyi.IO.vbproj">
+      <Project>{053ecc71-e49d-4254-9a5a-7d36b3f50d37}</Project>
+      <Name>Szunyi.IO</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>
