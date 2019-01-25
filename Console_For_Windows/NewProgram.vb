@@ -34,16 +34,20 @@ Public Class NewProgram
         ' Add any initialization after the InitializeComponent() call.
         Me.Type = type
         Me.H = h
+        Me.cProgram = P
         Me.cbProgramType.Items.AddRange(Szunyi.Common.Util_Helpers.Get_All_Enum_Names(Of Console_For_Windows.ProgramType)(Nothing).ToArray)
         Dim t = Szunyi.Common.Util_Helpers.Get_Enum_Name(Of Console_For_Windows.ProgramType)(P.Type)
-        cbProgramType.SelectedIndex = cbProgramType.FindStringExact(t)
-        Me.cbKeyWords.Items.AddRange(h.Get_All_KeyWords.ToArray)
-        Me.cKeyWords = P.Description.KeyWords.Clone
-        Me.tbProgramName.Text = P.Description.Name
-        Me.tbKeyWords.Text = Szunyi.Common.GetText(P.Description.KeyWords, ";")
-        Me.tbDescription.Text = P.Description.Description
-        Me.cProgram = P.Clone
-        Me.tbLocation.Text = Me.cProgram.Location
+        Select Case type
+            Case Type.New_SubProgram
+
+            Case Type.New_Program
+
+            Case Type.Edit_Program
+
+            Case Type.Edit_SubProgram
+
+
+        End Select
 
     End Sub
 
@@ -103,10 +107,12 @@ Public Class NewProgram
 
     Private Sub cbKeyWords_Validating(sender As Object, e As CancelEventArgs) Handles cbKeyWords.Validating
         If cKeyWords.HasContain(cbKeyWords.Text) = False Then
-            cKeyWords.Add(cbKeyWords.Text)
-            cbKeyWords.Text = String.Empty
-            tbKeyWords.Text = cKeyWords.GetText(";")
+
         End If
+        '    cKeyWords.Add(cbKeyWords.Text)
+        '   cbKeyWords.Text = String.Empty
+        ' tbKeyWords.Text = cKeyWords.GetText(";")
+        ' End If
     End Sub
 
     Private Sub NewProgram_Load(sender As Object, e As EventArgs) Handles MyBase.Load

@@ -5,7 +5,6 @@ Public Class NewParameter
     Dim cIncompatibleParamters As New List(Of String)
 
     Private Sub NewParameter_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        Me.cbParameterType.Items.AddRange(Szunyi.Common.Util_Helpers.Get_All_Enum_Names(Of Console_For_Windows.ParameterType)(Nothing).ToArray)
 
     End Sub
 
@@ -22,6 +21,8 @@ Public Class NewParameter
 
             Case Console_For_Windows.ParameterType.Selection
                 Me.TabControl1.SelectedIndex = 1
+            Case Console_For_Windows.ParameterType.List_Of_Integer
+                Me.TabControl1.SelectedIndex = 3
             Case Else
                 Me.TabControl1.SelectedIndex = 2
 
@@ -31,6 +32,10 @@ Public Class NewParameter
     Private Sub Save(sender As Object, e As EventArgs) Handles Button1.Click
         ' Validate
         Dim pa As New Parameter
+        If cbParameterType.Text = "" Then
+            MsgBox("Set Parameter Type")
+            Exit Sub
+        End If
         Dim ex = Szunyi.IO.Util_Helpers.Get_Enum_Value(Of Console_For_Windows.ParameterType)(cbParameterType.Text)
         pa.Type = ex
         pa.Description = New Basic_Description With {.Description = tbDescription.Text, .Name = tbProgramName.Text}
@@ -38,6 +43,12 @@ Public Class NewParameter
         pa.IncompatibleParameters = cIncompatibleParamters
         pa.IsEssentialParamater = chEssentialParamter.Checked
         Select Case ex
+            Case Console_For_Windows.ParameterType.List_Of_Integer
+                pa.Nof_Item = tbNofItem.Text
+                pa.Separator = tbSeparator.Text
+            Case Console_For_Windows.ParameterType.List_Of_Double
+                pa.Nof_Item = tbNofItem.Text
+                pa.Separator = tbSeparator.Text
             Case Console_For_Windows.ParameterType.string
                 pa.DefaultValue = tbSimpleText.Text
             Case Console_For_Windows.ParameterType.strings
@@ -46,11 +57,12 @@ Public Class NewParameter
             Case Console_For_Windows.ParameterType.File
 
             Case Console_For_Windows.ParameterType.Files
-
+                pa.DefaultValue = tbSeparator.Text
             Case Console_For_Windows.ParameterType.Selection
 
-                pa.DefaultValue = pa.AcceptableValues.First
 
+                pa.AcceptableValues = Split(tbSelection.Text, vbCrLf).ToList
+                pa.DefaultValue = pa.AcceptableValues.First
                 'Numbers Are COming
 
             Case ParameterType.Integer
@@ -141,7 +153,10 @@ Public Class NewParameter
 
         ' Add any initialization after the InitializeComponent() call.
         _SubProgram = sP
+        Dim ParamterNames = From x In sP.Parameters Select x.Description.Name
+        Me.cbParameterType.Items.AddRange(Szunyi.Common.Util_Helpers.Get_All_Enum_Names(Of Console_For_Windows.ParameterType)(Nothing).ToArray)
 
+        cbIncompatibleParamters.Items.AddRange(ParamterNames.ToArray)
     End Sub
     ''' <summary>
     ''' For Edit
@@ -152,6 +167,7 @@ Public Class NewParameter
 
         ' This call is required by the designer.
         InitializeComponent()
+        Me.cbParameterType.Items.AddRange(Szunyi.Common.Util_Helpers.Get_All_Enum_Names(Of Console_For_Windows.ParameterType)(Nothing).ToArray)
 
         ' Add any initialization after the InitializeComponent() call.
         _SubProgram = sP
@@ -161,14 +177,19 @@ Public Class NewParameter
         Me.tbProgramName.Text = P.Description.Name
         Me.tbSymbol.Text = P.Symbol
         Dim t = Szunyi.Common.Util_Helpers.Get_Enum_Name(Of ParameterType)(P.Type)
-        cbParameterType.Items.AddRange(Szunyi.Common.Util_Helpers.Get_All_Enum_Names(Of ParameterType)(Nothing).ToArray)
+
         cbParameterType.SelectedIndex = cbParameterType.FindStringExact(t)
         tbDescription.Text = P.Description.Description
         tbMin.Text = P.MinValue
         tbMax.Text = P.MaxValue
         tbDef.Text = P.DefaultValue
-        tbIncompatibleParameters.Text = P.KeyWords.GetText(",")
+        tbIncompatibleParameters.Text = P.IncompatibleParameters.GetText(",")
         chEssentialParamter.Checked = P.IsEssentialParamater
+        tbSeparator.Text = P.Separator
+        tbNofItem.Text = P.Nof_Item
+        Dim ParamterNames = From x In sP.Parameters Select x.Description.Name
+
+        cbIncompatibleParamters.Items.AddRange(ParamterNames.ToArray)
     End Sub
     Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
         Me.DialogResult = DialogResult.Cancel
@@ -176,11 +197,20 @@ Public Class NewParameter
     End Sub
 
     Private Sub cbIncompatibleParamters_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cbIncompatibleParamters.Validating
-        If cIncompatibleParamters.HasContain(cbIncompatibleParamters.Text) = False Then
-            cIncompatibleParamters.Add(cbIncompatibleParamters.Text)
-            cbIncompatibleParamters.Text = String.Empty
-            tbIncompatibleParameters.Text = cIncompatibleParamters.GetText(";")
+        '    If cIncompatibleParamters.HasContain(cbIncompatibleParamters.Text) = False Then
+        '   cIncompatibleParamters.Add(cbIncompatibleParamters.Text)
+        '    cbIncompatibleParamters.Text = String.Empty
+        '    tbIncompatibleParameters.Text = cIncompatibleParamters.GetText(";")
+        ' End If
+        If cbIncompatibleParamters.SelectedIndex > -1 Then
+            Dim txt As String = cbIncompatibleParamters.Items((cbIncompatibleParamters.SelectedIndex).ToString)
+            If cIncompatibleParamters.HasContain(txt) = False Then
+                cIncompatibleParamters.Add(cbIncompatibleParamters.Text)
+                cbIncompatibleParamters.Text = String.Empty
+                tbIncompatibleParameters.Text = cIncompatibleParamters.GetText(";")
+            End If
         End If
     End Sub
+
 
 End Class

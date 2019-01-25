@@ -24,8 +24,15 @@ End Class
 <Serializable>
 Public Class SubProgram
     Public Property Parameters As New List(Of Parameter)
+    Public Property ParameterGroupss As New List(Of ParameterGroup)
     Public Property Description As Basic_Description
 End Class
+<Serializable>
+Public Class ParameterGroup
+    Public Property Parameters As New List(Of Parameter)
+    Public Property Description As Basic_Description
+End Class
+
 <Serializable>
 Public Class Parameter
     Public Property Name As String
@@ -39,6 +46,9 @@ Public Class Parameter
     Public Property MaxValue As Double
     Public Property IncompatibleParameters As New List(Of String)
     Public Property IsEssentialParamater As Boolean
+    Public Property Nof_Item As Integer
+    Public Property Separator As String
+    Public Property File_ReName As String
 End Class
 <Serializable>
 Public Enum ProgramType
@@ -58,8 +68,9 @@ Public Enum ParameterType
     File = 9
     Files = 10
     stdin = 11
-
-
+    [Boolean] = 12
+    [List_Of_Integer] = 13
+    [List_Of_Double] = 14
 End Enum
 <Serializable>
 Public Class Basic_Description
@@ -175,6 +186,7 @@ Public Module Extensions
 
     <Extension>
     Public Function IsProgram(tr As TreeNode) As Boolean
+        If IsNothing(tr) = True Then Return False
         If IsNothing(tr.Tag) = True Then Return False
         If TypeOf tr.Tag Is Program Then
             Return True
@@ -184,6 +196,7 @@ Public Module Extensions
     End Function
     <Extension>
     Public Function IsSubProgram(tr As TreeNode) As Boolean
+        If IsNothing(tr) = True Then Return False
         If IsNothing(tr.Tag) = True Then Return False
         If TypeOf tr.Tag Is SubProgram Then
             Return True
@@ -192,9 +205,32 @@ Public Module Extensions
         End If
     End Function
     <Extension>
+    Public Function IsSubProgram_OR_ParameterGroup(tr As TreeNode) As Boolean
+        If IsNothing(tr) = True Then Return False
+        If IsNothing(tr.Tag) = True Then Return False
+        If TypeOf tr.Tag Is SubProgram Then
+            Return True
+        ElseIf TypeOf tr.Tag Is ParameterGroup Then
+            Return True
+        Else
+            Return False
+        End If
+    End Function
+    <Extension>
     Public Function IsParameter(tr As TreeNode) As Boolean
+        If IsNothing(tr) = True Then Return False
         If IsNothing(tr.Tag) = True Then Return False
         If TypeOf tr.Tag Is Parameter Then
+            Return True
+        Else
+            Return False
+        End If
+    End Function
+    <Extension>
+    Public Function IsParameterGroup(tr As TreeNode) As Boolean
+        If IsNothing(tr) = True Then Return False
+        If IsNothing(tr.Tag) = True Then Return False
+        If TypeOf tr.Tag Is ParameterGroup Then
             Return True
         Else
             Return False
@@ -240,7 +276,7 @@ Public Module Extensions
     End Function
     <Extension>
     Public Function Clone(Pa As Parameter) As Parameter
-        Return New Parameter With {.AcceptableValues = Pa.AcceptableValues.Clone, .DefaultValue = Pa.DefaultValue, .Description = Pa.Description.Clone, .KeyWords = Pa.KeyWords.Clone, .MaxValue = Pa.MaxValue, .MinValue = Pa.MinValue, .Name = Pa.Name, .Type = Pa.Type, .Symbol = Pa.Symbol, .IncompatibleParameters = Pa.IncompatibleParameters.Clone, .IsEssentialParamater = Pa.IsEssentialParamater}
+        Return New Parameter With {.Separator = Pa.Separator, .Nof_Item = Pa.Nof_Item, .AcceptableValues = Pa.AcceptableValues.Clone, .DefaultValue = Pa.DefaultValue, .Description = Pa.Description.Clone, .KeyWords = Pa.KeyWords.Clone, .MaxValue = Pa.MaxValue, .MinValue = Pa.MinValue, .Name = Pa.Name, .Type = Pa.Type, .Symbol = Pa.Symbol, .IncompatibleParameters = Pa.IncompatibleParameters.Clone, .IsEssentialParamater = Pa.IsEssentialParamater}
 
     End Function
 
@@ -266,4 +302,52 @@ Public Module Extensions
         Next
         Return x
     End Function
+
+    <Extension>
+    Public Function Get_Program(h As Hierarchy, Name As String) As Program
+
+        Dim P = From x In h.Programs Where x.Description.Name.IndexOf(Name) > -1 Select x
+
+        Select Case P.Count
+            Case 0
+                MsgBox("No any Program has found")
+            Case 1
+                Return P.First
+            Case Else
+                MsgBox("Too many Program has found")
+        End Select
+        Return Nothing
+    End Function
+
+    <Extension>
+    Public Function Get_Sub_Program(P As Program, Name As String) As SubProgram
+
+        Dim SP = From x In P.SubPrograms Where x.Description.Name.IndexOf(Name) > -1 Select x
+
+        Select Case SP.Count
+            Case 0
+                MsgBox("No any Program has found")
+            Case 1
+                Return SP.First
+            Case Else
+                MsgBox("Too many Program has found")
+        End Select
+        Return Nothing
+    End Function
+    <Extension>
+    Public Function Get_ParameterGroup(SP As SubProgram, Name As String) As ParameterGroup
+
+        Dim PG = From x In SP.ParameterGroupss Where x.Description.Name.IndexOf(Name) > -1 Select x
+
+        Select Case PG.Count
+            Case 0
+                MsgBox("No any Program has found")
+            Case 1
+                Return PG.First
+            Case Else
+                MsgBox("Too many Program has found")
+        End Select
+        Return Nothing
+    End Function
+
 End Module
