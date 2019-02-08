@@ -1,4 +1,7 @@
-﻿Imports System.Runtime.CompilerServices
+﻿Imports System.IO
+Imports System.Runtime.CompilerServices
+Imports Szunyi, Szunyi.Common.Extensions
+Imports Szunyi.IO.Extensions
 Public Enum [Type]
     New_Program = 1
     Edit_Program = 2
@@ -8,6 +11,11 @@ Public Enum [Type]
     Edit_Parameter = 6
 
 End Enum
+Public Enum File_ReName
+    Append_Before_Extension = 1
+    Change_Extension = 2
+
+End Enum
 Public Class Hierarchy
     Public Property Programs As New List(Of Program)
 End Class
@@ -15,55 +23,133 @@ End Class
 Public Class Program
     Public Property SubPrograms As New List(Of SubProgram)
     Public Property Type As ProgramType
-    '  Public Property Name As String
-    '  Public Property Description As String
-    '  Public Property KeyWords As New List(Of String)
-    Public Description As Basic_Description
+
+    Public Description As New Basic_Description
     Public Property Location As String
+    '   Public Property Working_Directory As DirectoryInfo
+
+    Friend Shared Function Get_Header() As String
+        Return "Program Name	Program Description	Program Symbol	Program KeyWords	Program Location	Program Working Directory	Program Type"
+    End Function
+    Public Overrides Function ToString() As String
+        Return Me.Description.ToString.Replace(vbCrLf, " ") & vbTab & Me.Location & vbTab & Me.Type
+    End Function
+    Public Function Get_Command()
+        Dim str As New System.Text.StringBuilder
+        Select Case Me.Type
+            Case ProgramType.windows_perl
+                str.Append("perl ").Append(Me.Location)
+        End Select
+        Return str.ToString
+    End Function
 End Class
 <Serializable>
 Public Class SubProgram
     Public Property Parameters As New List(Of Parameter)
     Public Property ParameterGroupss As New List(Of ParameterGroup)
     Public Property Description As Basic_Description
+
+    Friend Shared Function Get_Header() As String
+        Return Split("SubProgram Name,SubProgram Description,SubProgram Symbol,SubProgram KeyWords", ",").GetText(vbTab)
+    End Function
+    Public Overrides Function ToString() As String
+        Return Me.Description.ToString.Replace(vbCrLf, " ")
+    End Function
+    Public Function Get_Command()
+        If IsNothing(Me.Description) = True Then Return String.Empty
+        If IsNothing(Me.Description.Symbol) = True Then Return String.Empty
+        Return " " & Me.Description.Symbol
+    End Function
 End Class
 <Serializable>
 Public Class ParameterGroup
     Public Property Parameters As New List(Of Parameter)
     Public Property Description As Basic_Description
+    Public Overrides Function ToString() As String
+        Dim str As New System.Text.StringBuilder
+
+        Return Description.ToString.Replace(vbCrLf, " ")
+    End Function
+    Friend Shared Function Get_Header() As String
+        Return Split("ParameterGroup Name,ParameterGroup Description,ParameterGroup KeyWords", ",").GetText(vbTab)
+    End Function
 End Class
 
 <Serializable>
 Public Class Parameter
-    Public Property Name As String
-    Public Property Symbol As String
-    Public Property Description As Basic_Description
-    Public Property Type As ParameterType
-    Public Property KeyWords As New List(Of String)
-    Public Property DefaultValue As String
-    Public Property AcceptableValues As List(Of String)
+    Public Sub New()
+
+    End Sub
+    Public Property Description As New Basic_Description
+    Public Property Type As ParameterType = ParameterType.Boolean
+    Public Property Default_Value As String = ""
+    Public Property Acceptable_Values As List(Of String)
     Public Property MinValue As Double
     Public Property MaxValue As Double
-    Public Property IncompatibleParameters As New List(Of String)
-    Public Property IsEssentialParamater As Boolean
+    Public Property Incompatible_Parameters As New List(Of String)
+    Public Property Must_Parameters As New List(Of String)
+    Public Property Is_Essential_Paramater As Boolean
     Public Property Nof_Item As Integer
+    Public Property Selected_File As String = ""
+    Public Property Selected_Files As List(Of String)
+    Public Property File_Filter As String
     Public Property Separator As String
-    Public Property File_ReName As String
+    Public Property File_Name_Append As String
+    Public Property Values As List(Of String)
+
+    '   Public Property Working_Directory As String
+    Public Overrides Function ToString() As String
+        Dim str As New System.Text.StringBuilder
+        '    Parameter Name
+        '      Parameter Description
+        '    Parameter Symbol
+        '     Parameter KeyWords
+        '    Parameter Append Working Directory
+        '     Parameter Type
+        '    Parameter Separator
+        '     Parameter Nof Item
+        '     Parameter FileName Append
+        '   Parameter Incompatible Parameters
+        str.Append(Me.Description.ToString)
+        '    str.Append(vbTab).Append(Me.Working_DIrectory)
+        str.Append(vbTab).Append(Me.Type)
+        '     str.Append(vbTab).Append(Me.Separator)
+        str.Append(vbTab).Append(Me.Nof_Item)
+        '   str.Append(vbTab).Append(Me.Separator)
+        '   str.Append(vbTab).Append(Me.File_Name_Append)
+        str.Append(vbTab).Append(Me.Incompatible_Parameters.GetText(";"))
+        Return str.ToString.Replace(vbCrLf, " ").Replace(vbCr, " ").Replace(vbLf, " ")
+    End Function
+
+    Friend Shared Function Get_Header() As String
+        Dim s = Split("Parameter Name,Parameter Description,Parameter Symbol,Parameter KeyWords,Parameter Append Working Directory,Parameter Type,Parameter Separator,Parameter Nof Item,Parameter FileName Append,Parameter Incompatible Parameters", ",").GetText
+        Return s.Replace(vbCr, " ").Replace(vbLf, " ")
+    End Function
+    Public Iterator Function Get_Current_Values() As IEnumerable(Of String)
+        Select Case Me.Type
+            Case ParameterType.List_Of_Double, ParameterType.List_Of_Integer, ParameterType.Files
+                For Each Item In Me.Values
+                    Yield Me.Description.Symbol & " " & Item
+                Next
+            Case Else
+                Yield Me.Description.Symbol & " " & Me.Default_Value
+        End Select
+    End Function
 End Class
 <Serializable>
 Public Enum ProgramType
-    linux = 1
-    java = 2
-    phyton = 3
+    linux = 0
+    java = 1
+    phyton = 2
     powershell = 4
     windows_command_line = 5
+    windows_perl = 6
 End Enum
 <Serializable>
 Public Enum ParameterType
     [Integer] = 1
     [Double] = 4
     [string] = 6
-    strings = 7
     Selection = 8
     File = 9
     Files = 10
@@ -71,11 +157,14 @@ Public Enum ParameterType
     [Boolean] = 12
     [List_Of_Integer] = 13
     [List_Of_Double] = 14
+    Constant_File = 15
+    File_Rename = 16
 End Enum
 <Serializable>
 Public Class Basic_Description
-    Public Property Name As String
-    Public Property Description As String
+    Public Property Name As String = ""
+    Public Property Description As String = ""
+    Public Property Symbol As String = ""
     Public Property KeyWords As New List(Of String)
     Public Sub New(Name As String, Description As String, KeyWords As IEnumerable(Of String))
         Me.Name = Name
@@ -85,9 +174,73 @@ Public Class Basic_Description
     Public Sub New()
 
     End Sub
+    Public Overrides Function ToString() As String
+        Dim str As New System.Text.StringBuilder
+        str.Append(Me.Name)
+        str.Append(vbTab).Append(Me.Description)
+        str.Append(vbTab).Append(Me.Symbol)
+        str.Append(vbTab).Append(Me.KeyWords.GetText(";"))
+        Return str.ToString.Replace(vbCrLf, " ")
+    End Function
 End Class
 
 Public Module Extensions
+    <Extension>
+    Public Function Full_Name(File As FileInfo, type As ProgramType)
+        Select Case type
+            Case ProgramType.phyton
+                Return File.FullName_Linux
+            Case ProgramType.phyton
+                Return File.FullName_Python
+            Case ProgramType.windows_command_line
+                Return File.FullName_Windows_cmd
+            Case ProgramType.windows_perl
+                Return File.FullName_Windows_cmd
+        End Select
+    End Function
+    <Extension>
+    Public Function Get_File_Input(Paras As IEnumerable(Of Parameter)) As Parameter
+        Dim res = Paras.Get_File_Inputs
+
+        Return res.First
+    End Function
+    <Extension>
+    Public Function Get_File_ReName(Paras As IEnumerable(Of Parameter)) As Parameter
+        Dim res = From x In Paras Where x.Type = ParameterType.File_Rename
+        If res.Count = 0 Then Return Nothing
+
+        Return res.First
+    End Function
+    <Extension>
+    Public Iterator Function Get_File_Inputs(Paras As IEnumerable(Of Parameter)) As IEnumerable(Of Parameter)
+        Dim res = From x In Paras Where x.Type = ParameterType.Files Or x.Type = ParameterType.File
+
+        For Each r In res
+            Yield r
+        Next
+    End Function
+    <Extension>
+    Public Iterator Function Get_Default_Parameters(SP As SubProgram) As IEnumerable(Of Parameter)
+        For Each P In SP.Get_All_Parameters
+            If P.Type = ParameterType.Files Or P.Type = ParameterType.File_Rename Then
+
+            Else
+                Yield P
+            End If
+        Next
+
+    End Function
+    <Extension>
+    Public Iterator Function Get_All_Parameters(SP As SubProgram) As IEnumerable(Of Parameter)
+        For Each P In SP.Parameters
+            Yield P
+        Next
+        For Each PG In SP.ParameterGroupss
+            For Each P In PG.Parameters
+                Yield P
+            Next
+        Next
+    End Function
     ''' <summary>
     ''' Yield All ProgramName from IEnumerable(Of Program)
     ''' </summary>
@@ -131,6 +284,8 @@ Public Module Extensions
     End Function
     <Extension>
     Public Function HasProgramName(Programs As IEnumerable(Of SubProgram), ProgramName As String) As Boolean
+
+        If Programs.Count = 0 Then Return False
         Dim res = From x In Programs.Get_All_ProgramName Where x.IndexOf(ProgramName, comparisonType:=StringComparison.InvariantCultureIgnoreCase) > -1 And ProgramName.Length = x.Length
 
         If res.Count > 0 Then Return True
@@ -142,6 +297,7 @@ Public Module Extensions
     End Function
     <Extension>
     Public Function HasProgramName(P As Program, ProgramName As String) As Boolean
+        If IsNothing(P.SubPrograms) = True Then Return False
         Return P.SubPrograms.HasProgramName(ProgramName)
     End Function
 
@@ -241,7 +397,7 @@ Public Module Extensions
     Public Function Clone(SubPrograms As IEnumerable(Of SubProgram)) As List(Of SubProgram)
         Dim out As New List(Of SubProgram)
         For Each Sp In SubPrograms
-            out.Add(Sp.CLone)
+            out.Add(Sp.Clone)
         Next
         Return out
     End Function
@@ -254,12 +410,13 @@ Public Module Extensions
 
     <Extension>
     Public Function Clone(BD As Basic_Description) As Basic_Description
-        Return New Basic_Description With {.Name = BD.Name, .Description = BD.Description, .KeyWords = BD.KeyWords.Clone}
+        Return New Basic_Description With {.Name = BD.Name, .Description = BD.Description, .Symbol = BD.Symbol, .KeyWords = BD.KeyWords.Clone}
 
     End Function
     <Extension>
     Public Function Clone(s As IEnumerable(Of String)) As List(Of String)
         Dim out As New List(Of String)
+        If IsNothing(s) = True Then Return out
         For Each item In s
             out.Add(item)
 
@@ -276,7 +433,8 @@ Public Module Extensions
     End Function
     <Extension>
     Public Function Clone(Pa As Parameter) As Parameter
-        Return New Parameter With {.Separator = Pa.Separator, .Nof_Item = Pa.Nof_Item, .AcceptableValues = Pa.AcceptableValues.Clone, .DefaultValue = Pa.DefaultValue, .Description = Pa.Description.Clone, .KeyWords = Pa.KeyWords.Clone, .MaxValue = Pa.MaxValue, .MinValue = Pa.MinValue, .Name = Pa.Name, .Type = Pa.Type, .Symbol = Pa.Symbol, .IncompatibleParameters = Pa.IncompatibleParameters.Clone, .IsEssentialParamater = Pa.IsEssentialParamater}
+        Return New Parameter With {.Nof_Item = Pa.Nof_Item, .Acceptable_Values = Pa.Acceptable_Values.Clone, .Default_Value = Pa.Default_Value, .Description = Pa.Description.Clone,
+             .MaxValue = Pa.MaxValue, .MinValue = Pa.MinValue, .Type = Pa.Type, .Incompatible_Parameters = Pa.Incompatible_Parameters.Clone, .Is_Essential_Paramater = Pa.Is_Essential_Paramater}
 
     End Function
 
@@ -350,4 +508,39 @@ Public Module Extensions
         Return Nothing
     End Function
 
+    <Extension>
+    Public Function Get_Header(Tr As TreeNode) As String
+        If Tr.IsProgram Then
+            Return Split("Program Name,Program Description,Program Symbol,Program KeyWords,Program Location,Program Working Directory,Program Type", ",").GetText
+        ElseIf Tr.IsSubProgram Then
+            Return Split("SubProgram Name,SubProgram Description,SubProgram Symbol,SubProgram KeyWords", ",").GetText
+        ElseIf Tr.IsParameterGroup Then
+            Return Split("ParameterGroup Name,ParameterGroup Description,ParameterGroup KeyWords", ",").GetText
+        ElseIf Tr.IsParameter Then
+            Return Split("Parameter Name,Parameter Description,Parameter Symbol,Parameter KeyWords,Parameter Append Working Directory,Parameter Type,Parameter Separator,Parameter Nof Item,Parameter FileName Append,Parameter Incompatible Parameters", ",").GetText
+        Else ' tr is nothing means full
+            Dim str As New System.Text.StringBuilder
+            str.Append(Split("Program Name,Program Description,Program Symbol,Program KeyWords,Program Location,Program Working Directory,Program Type", ",").GetText)
+            str.Append(vbTab).Append(Split("SubProgram Name,SubProgram Description,SubProgram Symbol,SubProgram KeyWords", ",").GetText)
+            str.Append(vbTab).Append(Split("ParameterGroup Name,ParameterGroup Description,ParameterGroup KeyWords", ",").GetText)
+            str.Append(vbTab).Append(Split("Parameter Name,Parameter Description,Parameter Symbol,Parameter KeyWords,Parameter Append Working Directory,Parameter Type,Parameter Separator,Parameter Nof Item,Parameter FileName Append,Parameter Incompatible Parameters", ",").GetText)
+            Return str.ToString
+        End If
+    End Function
+
+    <Extension>
+    Public Function Get_Values(tr As TreeNode)
+        If tr.IsProgram Then
+
+        ElseIf tr.IsSubProgram Then
+
+        ElseIf tr.IsParameterGroup Then
+
+        ElseIf tr.IsParameter Then
+            Dim P As Parameter = tr.Tag
+            Return P.ToString
+        Else
+
+        End If
+    End Function
 End Module

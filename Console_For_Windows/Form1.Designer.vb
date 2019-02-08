@@ -74,6 +74,7 @@ Partial Class Form1
         Me.ParametersToolStripMenuItem2 = New System.Windows.Forms.ToolStripMenuItem()
         Me.NameSzymbolDescriptionFileExtensionToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.FullToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ExportTdtToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         CType(Me.SplitContainer1, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SplitContainer1.Panel1.SuspendLayout()
         Me.SplitContainer1.Panel2.SuspendLayout()
@@ -205,7 +206,7 @@ Partial Class Form1
         '
         'SaveToolStripMenuItem
         '
-        Me.SaveToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.HierarchyToolStripMenuItem, Me.ProgramToolStripMenuItem1, Me.ParametersToolStripMenuItem, Me.SaveAsToolStripMenuItem})
+        Me.SaveToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.HierarchyToolStripMenuItem, Me.ProgramToolStripMenuItem1, Me.ParametersToolStripMenuItem, Me.SaveAsToolStripMenuItem, Me.ExportTdtToolStripMenuItem})
         Me.SaveToolStripMenuItem.Name = "SaveToolStripMenuItem"
         Me.SaveToolStripMenuItem.Size = New System.Drawing.Size(61, 29)
         Me.SaveToolStripMenuItem.Text = "&Save"
@@ -446,6 +447,12 @@ Partial Class Form1
         Me.FullToolStripMenuItem.Size = New System.Drawing.Size(252, 30)
         Me.FullToolStripMenuItem.Text = "Full"
         '
+        'ExportTdtToolStripMenuItem
+        '
+        Me.ExportTdtToolStripMenuItem.Name = "ExportTdtToolStripMenuItem"
+        Me.ExportTdtToolStripMenuItem.Size = New System.Drawing.Size(252, 30)
+        Me.ExportTdtToolStripMenuItem.Text = "Export Tdt"
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(9.0!, 20.0!)
@@ -524,4 +531,5 @@ Partial Class Form1
     Friend WithEvents NameSzymbolDescriptionFileExtensionToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents ParametersIntoGroupNoIncompatibleParametersToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents FullToolStripMenuItem As ToolStripMenuItem
+    Friend WithEvents ExportTdtToolStripMenuItem As ToolStripMenuItem
 End Class

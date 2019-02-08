@@ -81,6 +81,12 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BD.Designer.vb">
+      <DependentUpon>BD.vb</DependentUpon>
+    </Compile>
+    <Compile Include="BD.vb">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="FileSystemíprmissions.vb" />
     <Compile Include="Form1.vb">
       <SubType>Form</SubType>
@@ -131,6 +137,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="BD.resx">
+      <DependentUpon>BD.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.vb</DependentUpon>
     </EmbeddedResource>

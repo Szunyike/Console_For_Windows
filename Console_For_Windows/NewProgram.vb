@@ -7,9 +7,7 @@ Public Class NewProgram
     Public Property cKeyWords As New List(Of String)
     Public Property cProgram As Program
     Public Property Type As Type
-    Private Sub Programs1_Load(sender As Object, e As EventArgs)
 
-    End Sub
     Private Sub SetIt()
 
     End Sub
@@ -22,9 +20,8 @@ Public Class NewProgram
 
         ' Add any initialization after the InitializeComponent() call.
         Me.H = h
-        Me.cbProgramType.Items.AddRange(Szunyi.Common.Util_Helpers.Get_All_Enum_Names(Of Console_For_Windows.ProgramType)(Nothing).ToArray)
-        Me.cbKeyWords.Items.AddRange(h.Get_All_KeyWords.ToArray)
         Me.Type = type
+        Me.P = New Program
     End Sub
     Public Sub New(h As Hierarchy, P As Program, type As Type)
 
@@ -32,22 +29,10 @@ Public Class NewProgram
         InitializeComponent()
 
         ' Add any initialization after the InitializeComponent() call.
+
         Me.Type = type
         Me.H = h
-        Me.cProgram = P
-        Me.cbProgramType.Items.AddRange(Szunyi.Common.Util_Helpers.Get_All_Enum_Names(Of Console_For_Windows.ProgramType)(Nothing).ToArray)
-        Dim t = Szunyi.Common.Util_Helpers.Get_Enum_Name(Of Console_For_Windows.ProgramType)(P.Type)
-        Select Case type
-            Case Type.New_SubProgram
-
-            Case Type.New_Program
-
-            Case Type.Edit_Program
-
-            Case Type.Edit_SubProgram
-
-
-        End Select
+        Me.P = P
 
     End Sub
 
@@ -59,11 +44,6 @@ Public Class NewProgram
         ' Add any initialization after the InitializeComponent() call.
         Me.Type = type
         Me.H = h
-        Me.cKeyWords = SP.Description.KeyWords.Clone
-        Me.cbKeyWords.Items.AddRange(h.Get_All_KeyWords.ToArray)
-        Me.tbProgramName.Text = SP.Description.Name
-        Me.tbKeyWords.Text = Szunyi.Common.GetText(SP.Description.KeyWords, ";")
-        Me.tbDescription.Text = SP.Description.Description
         Me.P = P
         Me.SP = SP
 
@@ -71,52 +51,27 @@ Public Class NewProgram
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
         Select Case Me.Type
             Case Type.New_Program
-                If H.HasProgramName(tbProgramName.Text) = True Then
-
+                If H.HasProgramName(P.Description.Name) = True Then
                     Dim res = MsgBox("ProgramName has Already Entered. Do you want to override it?", MsgBoxStyle.OkCancel)
                     If res = MsgBoxResult.Cancel Then Exit Sub
-                Else
-                    Dim b As New Basic_Description With {.Name = tbProgramName.Text, .Description = tbDescription.Text, .KeyWords = cKeyWords.CloneStrings.ToList}
-                    Me.P = New Program With {.Description = b, .Type = Szunyi.Common.Util_Helpers.Get_Enum_Value(Of Console_For_Windows.ProgramType)(cbProgramType.SelectedItem), .Location = tbLocation.Text}
-                    Me.DialogResult = DialogResult.OK
-                    Me.Close()
                 End If
-            Case Type.Edit_Program
-                Dim b As New Basic_Description With {.Name = tbProgramName.Text, .Description = tbDescription.Text, .KeyWords = cKeyWords.CloneStrings.ToList}
-                Me.P = New Program With {.Description = b, .Type = Szunyi.Common.Util_Helpers.Get_Enum_Value(Of Console_For_Windows.ProgramType)(cbProgramType.SelectedItem), .Location = tbLocation.Text}
-                Me.DialogResult = DialogResult.OK
-                Me.Close()
             Case Type.New_SubProgram
-                If Me.cProgram.HasProgramName(tbProgramName.Text) = True Then
+                If Me.P.HasProgramName(P.Description.Name) = True Then
                     Dim res = MsgBox("ProgramName has Already Entered.", MsgBoxStyle.OkOnly)
                     Exit Sub
-                Else
-                    Dim b1 As New Basic_Description With {.Name = tbProgramName.Text, .Description = tbDescription.Text, .KeyWords = cKeyWords.CloneStrings.ToList}
-                    Me.SP = New SubProgram With {.Description = b1}
-                    Me.DialogResult = DialogResult.OK
-                    Me.Close()
                 End If
-            Case Type.Edit_SubProgram
-                Dim b1 As New Basic_Description With {.Name = tbProgramName.Text, .Description = tbDescription.Text, .KeyWords = cKeyWords.CloneStrings.ToList}
-                Me.SP = New SubProgram With {.Description = b1, .Parameters = SP.Parameters}
-                Me.DialogResult = DialogResult.OK
-                Me.Close()
         End Select
-
+        Me.DialogResult = DialogResult.OK
+        Me.Close()
     End Sub
 
-    Private Sub cbKeyWords_Validating(sender As Object, e As CancelEventArgs) Handles cbKeyWords.Validating
-        If cKeyWords.HasContain(cbKeyWords.Text) = False Then
 
-        End If
-        '    cKeyWords.Add(cbKeyWords.Text)
-        '   cbKeyWords.Text = String.Empty
-        ' tbKeyWords.Text = cKeyWords.GetText(";")
-        ' End If
-    End Sub
 
     Private Sub NewProgram_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-
+        Me.cbProgramType.Items.AddRange(Szunyi.Common.Util_Helpers.Get_All_Enum_Names(Of Console_For_Windows.ProgramType)(Nothing).ToArray)
+        Me.Bd1.Set_BD(P.Description)
+        Me.tbLocation.DataBindings.Add("Text", P, "Location")
+        Me.cbProgramType.DataBindings.Add(New Binding("SelectedIndex", P, "Type", formattingEnabled:=True, dataSourceUpdateMode:=DataSourceUpdateMode.OnPropertyChanged))
     End Sub
 
     Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
@@ -128,9 +83,9 @@ Public Class NewProgram
         If Me.Type = Type.Edit_Program Or Me.Type = Type.New_Program Then
             Dim File = Szunyi.IO.Pick_Up.File()
             If IsNothing(File) = False Then
-                Me.tbLocation.Enabled = True
+
                 tbLocation.Text = File.FullName
-                Me.tbLocation.Enabled = False
+              
             End If
         End If
 

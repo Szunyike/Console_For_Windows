@@ -82,12 +82,12 @@ Public Class Form1
     Private Sub NewSubProgramToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles SubProgramToolStripMenuItem.Click
         If tv1.SelectedNode.IsProgram = True Then
             Dim Pr As Program = tv1.SelectedNode.Tag
-            Dim x As New NewProgram(Hierarchy, Pr, Type.New_SubProgram)
+            Dim x As New NewProgram(Hierarchy, Pr.Clone, Type.New_SubProgram)
             x.cbProgramType.Enabled = False
             If x.ShowDialog = DialogResult.OK Then
                 Dim p As Program = tv1.SelectedNode.Tag
-                p.SubPrograms.Add(New SubProgram With {.Description = x.SP.Description})
-                ReFresh_Treeview()
+                p.SubPrograms.Add(New SubProgram With {.Description = x.P.Description})
+                ReFresh_Treeview(tv1.SelectedNode)
             End If
         End If
 
@@ -105,7 +105,7 @@ Public Class Form1
                     Dim sp As SubProgram = tv1.SelectedNode.Tag
                     sp.Parameters.Add(x.Parameter)
                     tv1.SelectedNode.Nodes.Add(New TreeNode With {.Text = x.Parameter.Description.Name, .ToolTipText = x.Parameter.Description.Description, .Tag = x.Parameter})
-                    '        ReFresh_Treeview()
+                    ReFresh_Treeview(tv1.SelectedNode)
                 End If
             End If
         End If
@@ -116,7 +116,7 @@ Public Class Form1
     Private Sub Edit_ProgramToolStripMenuItem2_Click(sender As Object, e As EventArgs) Handles ProgramToolStripMenuItem2.Click
         If tv1.SelectedNode.IsProgram = True Then
             Dim p As Program = tv1.SelectedNode.Tag
-            Dim x As New NewProgram(Me.Hierarchy, p, Type.Edit_Program)
+            Dim x As New NewProgram(Me.Hierarchy, p.Clone, Type.Edit_Program)
             Dim SelNode = tv1.SelectedNode.FullPath
             If x.ShowDialog = DialogResult.OK Then
                 Dim Index = tv1.SelectedNode.Index
@@ -154,11 +154,13 @@ Public Class Form1
                 Dim x As New NewParameter(sp, p)
                 If x.ShowDialog = DialogResult.OK Then
                     Dim Index = sp.Parameters.IndexOf(p)
-                    sp.Parameters.RemoveAt(Index)
-                    sp.Parameters.Insert(Index, x.Parameter)
-                    ReFresh_Treeview()
+                    If Index < -1 Then
+                        sp.Parameters.RemoveAt(Index)
+                        sp.Parameters.Insert(Index, x.Parameter)
+                        ReFresh_Treeview()
+                    End If
                 End If
-            Else
+                Else
                 Dim sp As SubProgram = tv1.SelectedNode.Parent.Parent.Tag
                 Dim PG As ParameterGroup = tv1.SelectedNode.Parent.Tag
                 Dim p As Parameter = tv1.SelectedNode.Tag
@@ -223,10 +225,71 @@ Public Class Form1
 #Region "Scripts"
     Private Sub CreateDefaultScriptToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles CreateDefaultScriptToolStripMenuItem.Click
         If tv1.SelectedNode.IsSubProgram Then
+            Dim Prog As Program = tv1.SelectedNode.Parent.Tag
+            Dim pType = Prog.Type
 
+            Dim SP As SubProgram = tv1.SelectedNode.Tag
+            Dim Paras = SP.Get_All_Parameters.ToList
+            Dim FP = Paras.Get_File_Input
+
+            If FP.Type = ParameterType.File Then
+                FP.Selected_File = Szunyi.IO.Pick_Up.File(FP.File_Filter).FullName
+                FP.Default_Value = FP.Selected_File
+            Else
+                FP.Selected_Files = Szunyi.IO.Pick_Up.Files(FP.File_Filter).FullName_Windows_cmd.ToList
+                FP.Values = FP.Selected_Files
+            End If
+
+
+            Dim P As Program = tv1.SelectedNode.Parent.Tag
+            Dim basic As String = P.Get_Command & SP.Get_Command
+            Dim Ps = SP.Get_Default_Parameters.ToList
+            Dim FR = Paras.Get_File_ReName
+            Dim str As New System.Text.StringBuilder
+            For Each Item In Get_values(Ps, 0, "")
+
+                For Each F In FP.Values
+                    str.Append(basic).Append(Item)
+                    F = F.Replace(Chr(34), "")
+                    Dim SF As New FileInfo(F)
+                    str.Append(" ").Append(FP.Description.Symbol).Append(" ").Append(SF.Full_Name(pType))
+                    If IsNothing(FR) = False Then
+                        str.Append(" ").Append(FR.Description.Symbol).Append(" ")
+                        If FR.File_Name_Append.StartsWith("AB") Then
+                            Dim s = FR.File_Name_Append.LastPart(" ")
+                            Dim NF = New FileInfo(F).Append_Before_Extension(s)
+                            str.Append(NF.Full_Name(Prog.Type))
+                        ElseIf FR.File_Name_Append.StartsWith("CE") Then
+                            Dim s = FR.File_Name_Append.LastPart(" ")
+                            Dim NF = New FileInfo(F).ChangeExtension(s)
+                            str.Append(NF.Full_Name(Prog.Type))
+                        End If
+                    End If
+                    str.AppendLine()
+                Next
+            Next
+            Clipboard.SetText(str.ToString)
+            Dim kj As Int16 = 54
         End If
     End Sub
+    Private Iterator Function Get_values(Paras As List(Of Parameter), level As Integer, cString As String) As IEnumerable(Of String)
+        If level = Paras.Count Then
+            Yield cString
+        Else
+            Dim cLevel = level
+            Dim bs = cString
+            For Each Item In Paras(level).Get_Current_Values
+                cString = bs & " " & Item
 
+                For Each s In Get_values(Paras, level + 1, cString)
+                    Yield s
+                Next
+            Next
+        End If
+
+
+
+    End Function
     Private Sub CreateMultipleScriptsToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles CreateMultipleScriptsToolStripMenuItem.Click
 
     End Sub
@@ -286,12 +349,12 @@ Public Class Form1
                 ' Set Incomapitble 
                 For Each Node In nodes
                     Dim P As Parameter = Node.Tag
-                    P.IncompatibleParameters.Clear()
+                    P.Incompatible_Parameters.Clear()
                     For Each nod2 In nodes
 
                         If Node IsNot nod2 Then
                             Dim p1 As Parameter = nod2.Tag
-                            P.IncompatibleParameters.Add(p1.Symbol)
+                            P.Incompatible_Parameters.Add(p1.Description.Symbol)
                         End If
                     Next
                     x.Parameters.Add(P)
@@ -447,7 +510,7 @@ Public Class Form1
             For Each Line In File.Parse_Lines
                 Dim s = Split(Line, vbTab)
                 Dim bd As New Basic_Description With {.Name = s(0), .Description = (s(2))}
-                Dim x As New Parameter With {.Name = s(0), .Symbol = s(1), .Description = bd, .Type = ParameterType.File, .File_ReName = s(3)}
+                Dim x As New Parameter With {.Description = bd, .Type = ParameterType.File}
                 If tv1.SelectedNode.IsSubProgram Then
                     Dim SP As SubProgram = tv1.SelectedNode.Tag
                     SP.Parameters.Add(x)
@@ -474,12 +537,77 @@ Public Class Form1
                                 Dim bd As New Basic_Description With {.Name = Line(3), .Description = Line(3)}
                                 PG = New ParameterGroup With {.Description = bd}
                             End If
-                            Dim p As New Parameter With {.s}
+                            '    Dim p As New Parameter With {.s}
                         End If
                     End If
                 End If
             Next
         Next
+    End Sub
+
+    Private Sub ExportTdtToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ExportTdtToolStripMenuItem.Click
+        Dim str As New System.Text.StringBuilder
+        If IsNothing(tv1.SelectedNode) = True Then
+            ' Export Whole Hierarchy
+            str.Append(Program.Get_Header)
+            str.Append(vbTab).Append(SubProgram.Get_Header)
+            str.Append(vbTab).Append(ParameterGroup.Get_Header)
+            str.Append(vbTab).Append(Parameter.Get_Header)
+            For Each P In Me.Hierarchy.Programs
+                For Each SP In P.SubPrograms
+                    For Each PG In SP.ParameterGroupss
+                        For Each Para In PG.Parameters
+                            str.AppendLine()
+                            str.Append(P.ToString)
+                            str.Append(vbTab).Append(SP.ToString)
+                            str.Append(vbTab).Append(PG.ToString)
+                            str.Append(vbTab).Append(Para.ToString)
+                        Next
+                    Next
+                    For Each Para In SP.Parameters
+                        str.AppendLine()
+                        str.Append(P.ToString)
+                        str.Append(vbTab).Append(SP.ToString)
+                        str.Append(vbTab).Append(vbTab).Append(vbTab).Append(vbTab)
+                        str.Append(vbTab).Append(Para.ToString)
+                    Next
+                Next
+            Next
+        ElseIf tv1.SelectedNode.IsProgram = True Then
+            str.Append(Program.Get_Header)
+            str.Append(vbTab).Append(SubProgram.Get_Header)
+            str.Append(vbTab).Append(ParameterGroup.Get_Header)
+            str.Append(vbTab).Append(Parameter.Get_Header)
+            For Each P In Me.Hierarchy.Programs
+                For Each SP In P.SubPrograms
+                    For Each PG In SP.ParameterGroupss
+                        For Each Para In PG.Parameters
+                            str.AppendLine()
+                            str.Append(P.ToString)
+                            str.Append(vbTab).Append(SP.ToString)
+                            str.Append(vbTab).Append(PG.ToString)
+                            str.Append(vbTab).Append(Para.ToString)
+                        Next
+                    Next
+                    For Each Para In SP.Parameters
+                        str.AppendLine()
+                        str.Append(P.ToString)
+                        str.Append(vbTab).Append(SP.ToString)
+                        str.Append(vbTab).Append(vbTab).Append(vbTab).Append(vbTab)
+                        str.Append(vbTab).Append(Para.ToString)
+                    Next
+                Next
+            Next
+        ElseIf tv1.SelectedNode.IsSubProgram = True Then
+
+        ElseIf tv1.SelectedNode.IsParameterGroup = True Then
+
+        ElseIf tv1.SelectedNode.IsParameter = True Then
+
+        Else
+
+        End If
+        If str.Length > 0 Then Clipboard.SetText(str.ToString)
     End Sub
 
 
